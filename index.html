@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>题干词单词卡</title>
+<style>
+  :root {
+    --bg: #f4f1ea; --card: #fffdf8; --ink: #23201b; --muted: #8a8377; --line: #e2dccf;
+    --yes: #2f8f5b; --yes-bg: #e3f3ea; --no: #c2452f; --no-bg: #fae6e1; --accent: #3d5a80;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1917; --card: #262421; --ink: #efeae0; --muted: #9a9387; --line: #3a3732;
+      --yes: #5fc48c; --yes-bg: #1f3a2b; --no: #ef7f69; --no-bg: #44231d; --accent: #9db8dc;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    display: flex; flex-direction: column; align-items: center; padding: 20px 16px 28px;
+  }
+  header, main, footer { width: 100%; max-width: 680px; }
+  header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  h1 { font-size: 17px; margin: 0; font-weight: 600; letter-spacing: .02em; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  select, button { font: inherit; color: inherit; }
+  select {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 14px;
+  }
+  .stats { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin: 14px 0 8px; align-items: center; }
+  .stats b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stats .y b { color: var(--yes); } .stats .n b { color: var(--no); }
+  .stats .pos { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; display: flex; }
+  .bar i { display: block; height: 100%; transition: width .2s; }
+  .bar .by { background: var(--yes); } .bar .bn { background: var(--no); }
+  main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 20px 0; }
+  .card {
+    position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    min-height: 380px; padding: 40px 32px 32px; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; cursor: pointer; user-select: none;
+    box-shadow: 0 6px 24px rgba(0,0,0,.06); transition: border-color .15s, transform .12s;
+  }
+  .card.flash-y { border-color: var(--yes); transform: translateX(6px); }
+  .card.flash-n { border-color: var(--no); transform: translateX(-6px); }
+  .tag { position: absolute; top: 14px; left: 18px; font-size: 12px; color: var(--muted); }
+  .badge { position: absolute; top: 12px; right: 16px; font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+  .badge.y { background: var(--yes-bg); color: var(--yes); }
+  .badge.n { background: var(--no-bg); color: var(--no); }
+  .word { font-size: clamp(34px, 8vw, 52px); font-weight: 650; letter-spacing: -.01em; overflow-wrap: anywhere; }
+  .phon { margin-top: 8px; color: var(--muted); font-size: 18px; font-family: "Lucida Sans Unicode", "Segoe UI", sans-serif; }
+  .speak { border: 0; background: none; cursor: pointer; color: var(--accent); font-size: 16px; padding: 2px 6px; }
+  .back { margin-top: 26px; width: 100%; border-top: 1px dashed var(--line); padding-top: 22px; }
+  .def { font-size: 19px; line-height: 1.7; white-space: pre-line; }
+  .ex { margin-top: 18px; font-size: 16px; line-height: 1.6; color: var(--accent); }
+  .ext { margin-top: 4px; font-size: 14px; color: var(--muted); }
+  .hint { margin-top: 30px; color: var(--muted); font-size: 13px; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .actions button {
+    border: 1px solid transparent; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+  .btn-n { background: var(--no-bg); color: var(--no); } .btn-y { background: var(--yes-bg); color: var(--yes); }
+  .actions button:hover { border-color: currentColor; }
+  kbd {
+    display: inline-block; min-width: 22px; padding: 1px 6px; border: 1px solid currentColor; border-radius: 5px;
+    font: 12px ui-monospace, Menlo, monospace; opacity: .8; margin-left: 6px; text-align: center;
+  }
+  footer { color: var(--muted); font-size: 12px; text-align: center; line-height: 2; }
+  footer kbd { margin: 0 3px 0 10px; }
+  footer a { color: inherit; margin-left: 14px; cursor: pointer; text-decoration: underline; }
+  .done h2 { font-size: 26px; margin: 0 0 10px; }
+  .done p { color: var(--muted); margin: 0 0 22px; }
+  .done .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .done button {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; cursor: pointer; font-size: 14px;
+  }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>题干词单词卡</h1>
+  <div class="controls">
+    <select id="list" aria-label="选择 List"></select>
+    <select id="filter" aria-label="筛选">
+      <option value="all">全部</option>
+      <option value="todo">未标记</option>
+      <option value="n">不知道</option>
+      <option value="y">知道</option>
+    </select>
+    <select id="order" aria-label="顺序">
+      <option value="seq">顺序</option>
+      <option value="rand">乱序</option>
+    </select>
+  </div>
+</header>
+
+<div class="stats" style="width:100%;max-width:680px">
+  <span class="y">知道 <b id="cy">0</b></span>
+  <span class="n">不知道 <b id="cn">0</b></span>
+  <span>未标记 <b id="ct">0</b></span>
+  <span class="pos" id="pos"></span>
+</div>
+<div class="bar" style="width:100%;max-width:680px"><i class="by" id="by"></i><i class="bn" id="bn"></i></div>
+
+<main>
+  <div class="card" id="card">
+    <div id="face">
+      <span class="tag" id="tag"></span>
+      <span class="badge" id="badge" hidden></span>
+      <div class="word" id="word"></div>
+      <div class="phon"><span id="phon"></span><button class="speak" id="speak" title="朗读 (P)">🔊</button></div>
+      <div class="back" id="back" hidden>
+        <div class="def" id="def"></div>
+        <div class="ex" id="ex"></div>
+        <div class="ext" id="ext"></div>
+      </div>
+      <div class="hint" id="hint">按空格或点击卡片查看释义</div>
+    </div>
+    <div class="done" id="done" hidden>
+      <h2 id="doneTitle"></h2>
+      <p id="doneText"></p>
+      <div class="row">
+        <button id="reviewN">复习「不知道」的词</button>
+        <button id="restart">重新开始这一组</button>
+      </div>
+    </div>
+  </div>
+  <div class="actions" id="actions">
+    <button class="btn-n" id="btnN">不知道 <kbd>N</kbd></button>
+    <button class="btn-y" id="btnY">知道 <kbd>Y</kbd></button>
+  </div>
+</main>
+
+<footer>
+  <kbd>Y</kbd>知道 <kbd>N</kbd>不知道 <kbd>空格</kbd>翻面 <kbd>←</kbd><kbd>→</kbd>上/下一个 <kbd>P</kbd>朗读
+  <a id="reset">清空当前范围的标记</a>
+</footer>
+
+<script src="words.js"></script>
+<script>
+(function () {
+  var WORDS = window.WORDS || [];
+  var KEY = 'flashcards-tigan-status-v1', PREF = 'flashcards-tigan-pref-v1';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function load(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  var status = load(KEY, {});            // { word: 'y' | 'n' }，同一个单词在不同 list 里共享标记
+  var pref = load(PREF, { list: 'all', filter: 'all', order: 'seq' });
+  var deck = [], idx = 0, flipped = false;
+
+  // List 下拉
+  var lists = [];
+  WORDS.forEach(function (w) { if (lists.indexOf(w.l) < 0) lists.push(w.l); });
+  var sel = $('list');
+  sel.add(new Option('全部 List（' + WORDS.length + ' 词）', 'all'));
+  lists.forEach(function (n) {
+    var c = WORDS.filter(function (w) { return w.l === n; }).length;
+    sel.add(new Option('List ' + n + '（' + c + ' 词）', String(n)));
+  });
+  sel.value = pref.list; if (sel.selectedIndex < 0) sel.value = 'all';
+  $('filter').value = pref.filter; $('order').value = pref.order;
+
+  function scope() {
+    var l = sel.value;
+    return l === 'all' ? WORDS : WORDS.filter(function (w) { return String(w.l) === l; });
+  }
+
+  function buildDeck() {
+    var f = $('filter').value;
+    deck = scope().filter(function (w) {
+      var s = status[w.w];
+      return f === 'all' || (f === 'todo' ? !s : s === f);
+    });
+    if ($('order').value === 'rand') {
+      for (var i = deck.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1)), t = deck[i]; deck[i] = deck[j]; deck[j] = t;
+      }
+    }
+    idx = 0; flipped = false;
+    // 「全部」模式下从第一个未标记的词继续
+    if (f === 'all' && $('order').value === 'seq') {
+      for (var k = 0; k < deck.length; k++) if (!status[deck[k].w]) { idx = k; break; }
+    }
+    save(PREF, { list: sel.value, filter: f, order: $('order').value });
+    render();
+  }
+
+  function render() {
+    var sc = scope(), y = 0, n = 0;
+    sc.forEach(function (w) { if (status[w.w] === 'y') y++; else if (status[w.w] === 'n') n++; });
+    $('cy').textContent = y; $('cn').textContent = n; $('ct').textContent = sc.length - y - n;
+    $('by').style.width = (sc.length ? y / sc.length * 100 : 0) + '%';
+    $('bn').style.width = (sc.length ? n / sc.length * 100 : 0) + '%';
+
+    var end = idx >= deck.length;
+    $('face').hidden = end; $('done').hidden = !end; $('actions').hidden = end;
+    $('pos').textContent = deck.length ? Math.min(idx + 1, deck.length) + ' / ' + deck.length : '';
+    if (end) {
+      $('doneTitle').textContent = deck.length ? '这一组过完了 🎉' : '这里没有单词';
+      $('doneText').textContent = deck.length
+        ? '当前范围：知道 ' + y + '，不知道 ' + n + '，未标记 ' + (sc.length - y - n)
+        : '换一个 List 或筛选条件试试';
+      $('reviewN').hidden = n === 0;
+      return;
+    }
+    var w = deck[idx], s = status[w.w];
+    $('tag').textContent = 'List ' + w.l;
+    $('word').textContent = w.w;
+    $('phon').textContent = w.p ? '/' + w.p + '/' : '';
+    $('def').textContent = w.d; $('ex').textContent = w.e; $('ext').textContent = w.t;
+    $('back').hidden = !flipped; $('hint').hidden = flipped;
+    var b = $('badge'); b.hidden = !s; b.className = 'badge ' + (s || '');
+    b.textContent = s === 'y' ? '已标：知道' : s === 'n' ? '已标：不知道' : '';
+  }
+
+  function flip() { if (idx < deck.length) { flipped = !flipped; render(); } }
+  function go(d) {
+    var ni = idx + d;
+    if (ni < 0 || ni > deck.length) return;
+    idx = ni; flipped = false; render();
+  }
+  function mark(v) {
+    if (idx >= deck.length) return;
+    status[deck[idx].w] = v; save(KEY, status);
+    var c = $('card'), cls = 'flash-' + v;
+    c.classList.add(cls);
+    setTimeout(function () { c.classList.remove(cls); }, 140);
+    go(1);
+  }
+  function speak() {
+    if (idx >= deck.length || !window.speechSynthesis) return;
+    var u = new SpeechSynthesisUtterance(deck[idx].w); u.lang = 'en-GB';
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // 同时看 key 和 code：大写锁定或中文输入法下按 Y / N 也能生效
+    var k = (e.key || '').toLowerCase(), c = e.code;
+    if (k === 'y' || c === 'KeyY') mark('y');
+    else if (k === 'n' || c === 'KeyN') mark('n');
+    else if (k === ' ' || c === 'Space' || k === 'enter') flip();
+    else if (k === 'arrowleft') go(-1);
+    else if (k === 'arrowright') go(1);
+    else if (k === 'p' || c === 'KeyP') speak();
+    else return;
+    e.preventDefault();
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  });
+
+  $('card').addEventListener('click', function (e) { if (!e.target.closest('button')) flip(); });
+  $('speak').addEventListener('click', speak);
+  $('btnY').addEventListener('click', function () { mark('y'); });
+  $('btnN').addEventListener('click', function () { mark('n'); });
+  ['list', 'filter', 'order'].forEach(function (id) {
+    $(id).addEventListener('change', function () { buildDeck(); this.blur(); });
+  });
+  $('reviewN').addEventListener('click', function () { $('filter').value = 'n'; buildDeck(); });
+  $('restart').addEventListener('click', function () { buildDeck(); idx = 0; render(); });
+  $('reset').addEventListener('click', function () {
+    var sc = scope();
+    if (!confirm('清空当前范围内 ' + sc.length + ' 个词的「知道 / 不知道」标记？')) return;
+    sc.forEach(function (w) { delete status[w.w]; });
+    save(KEY, status); buildDeck();
+  });
+
+  buildDeck();
+})();
+</script>
+</body>
+</html>
