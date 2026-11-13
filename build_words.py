@@ -33,7 +33,13 @@ def files(d):
 # 用法: python3 -I build_words.py <表格文件夹> <输出 words.js>
 if __name__ == '__main__':
     src, dst = sys.argv[1], sys.argv[2]
-    words = []
+    # 同目录下的 exclude.txt：不放进单词卡的词
+    ex_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'exclude.txt')
+    exclude = set()
+    if os.path.exists(ex_path):
+        with open(ex_path, encoding='utf-8') as fh:
+            exclude = {ln.strip().lower() for ln in fh if ln.strip() and not ln.startswith('#')}
+    words, skipped, hit = [], 0, set()
     for f in files(src):
         n = int(f.rsplit('_', 1)[1].split('.')[0])
         for _, rows in read(f):
@@ -41,8 +47,14 @@ if __name__ == '__main__':
                 r = [(x or '').strip() for x in r] + [''] * 5
                 if not r[0]:
                     continue
+                if r[0].lower() in exclude:
+                    skipped += 1
+                    hit.add(r[0].lower())
+                    continue
                 d = '\n'.join(s.strip().rstrip('；;') for s in r[2].split('\n') if s.strip())
                 words.append({'l': n, 'w': r[0], 'p': r[1], 'd': d, 'e': r[3], 't': r[4]})
     with open(dst, 'w', encoding='utf-8') as fh:
         fh.write('window.WORDS = ' + json.dumps(words, ensure_ascii=False, separators=(',', ':')) + ';\n')
-    print(len(words), 'words ->', dst)
+    print(len(words), 'words ->', dst, '| skipped', skipped, 'entries for', len(hit), 'excluded words')
+    if exclude - hit:
+        print('exclude.txt 里没匹配到的词:', sorted(exclude - hit))
